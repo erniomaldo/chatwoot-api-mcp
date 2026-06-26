@@ -1,0 +1,4 @@
+chatwoot-sdk>=0.2.0
+mcp>=1.0.0
+httpx>=0.27.0
+pydantic>=2.9.0
