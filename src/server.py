@@ -99,7 +99,6 @@ def chatwoot_get_profile() -> dict:
 
 @mcp.tool()
 def chatwoot_list_conversations(
-    status: str = "open",
     assignee_type: str = "all",
     page: int = 1,
     inbox_id: int | None = None,
@@ -107,10 +106,12 @@ def chatwoot_list_conversations(
     labels: str | None = None,
     q: str | None = None,
 ) -> list | dict:
-    """List conversations with optional filters.
+    """List open conversations with optional filters.
+
+    Solo muestra conversaciones abiertas por defecto.
+    Para histórico o retrospectiva pídelo explícitamente.
 
     Args:
-        status: 'open', 'resolved', 'pending', or 'snoozed'
         assignee_type: 'all', 'me', or 'unassigned'
         page: page number for pagination
         inbox_id: filter by inbox ID
@@ -123,7 +124,7 @@ def chatwoot_list_conversations(
         label_list = labels.split(",") if labels else None
         convs = client.conversations.list(
             account_id=aid,
-            status=status,
+            status="open",
             assignee_type=assignee_type,
             page=page,
             inbox_id=inbox_id,

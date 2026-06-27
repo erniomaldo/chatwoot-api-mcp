@@ -98,14 +98,14 @@ class TestProfile:
 class TestConversations:
     def test_list_conversations(self, patch_http):
         from server import chatwoot_list_conversations
-        result = chatwoot_list_conversations(status="open")
+        result = chatwoot_list_conversations()
         assert isinstance(result, list)
         assert result[0]["id"] == 42
         assert result[0]["status"] == "open"
 
     def test_list_conversations_with_filters(self, patch_http):
         from server import chatwoot_list_conversations
-        result = chatwoot_list_conversations(status="open", inbox_id=1, q="test")
+        result = chatwoot_list_conversations(inbox_id=1, q="test")
         assert isinstance(result, list)
 
     def test_get_conversation(self, patch_http):
