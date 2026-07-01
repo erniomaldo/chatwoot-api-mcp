@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-Chatwoot MCP Server — entry point.
+"""Chatwoot API MCP Server — entry point.
 
 Connects Chatwoot SDK to MCP via stdio transport.
 Run: python3 run_server.py

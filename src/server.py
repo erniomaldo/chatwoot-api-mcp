@@ -1,7 +1,7 @@
 """
-Chatwoot MCP Server — core module.
+Chatwoot API MCP Server — core module.
 
-Exposes 20+ MCP tools over stdio transport, powered by the official
+Exposes 15 MCP tools over stdio transport, powered by the official
 chatwoot-sdk (MIT, maintained by Chatwoot engineering).
 
 Tools are organized by resource: profile, conversations, messages,

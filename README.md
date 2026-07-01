@@ -1,139 +1,196 @@
-# Chatwoot MCP Server
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/chatwoot/chatwoot/main/public/brand-assets/logo.svg">
+    <img alt="Chatwoot" src="https://raw.githubusercontent.com/chatwoot/chatwoot/main/public/brand-assets/logo.svg" width="320">
+  </picture>
+</p>
 
-MCP (Model Context Protocol) server that connects any MCP client (Claude, Hermes Agent, etc.) to a **Chatwoot** instance via the official [chatwoot-sdk](https://pypi.org/project/chatwoot-sdk/) (MIT, maintained by Chatwoot engineering).
+<h1 align="center">Chatwoot API MCP Server</h1>
 
-**20+ tools** covering conversations, messages, contacts, inboxes, agents, teams, and profile — all over **stdio transport** (no HTTP, no SSE).
+<p align="center">
+  <a href="https://www.python.org/downloads/"><img src="https://img.shields.io/badge/python-≥3.11-blue?logo=python" alt="Python ≥3.11"></a>
+  <a href="https://pypi.org/project/chatwoot-sdk/"><img src="https://img.shields.io/badge/chatwoot--sdk-0.2.0-blue?logo=python" alt="chatwoot-sdk 0.2.0"></a>
+  <a href="https://www.chatwoot.com/"><img src="https://img.shields.io/badge/Chatwoot-API-FF6C37?logo=chatwoot" alt="Chatwoot API"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-green" alt="MIT License"></a>
+</p>
+
+<p align="center">
+  A <a href="https://modelcontextprotocol.io/">Model Context Protocol (MCP)</a> server that exposes the <strong>Chatwoot Application API</strong> through <strong>15 tools</strong> over <strong>stdio transport</strong>. Built on the official <code>chatwoot-sdk</code> (MIT, maintained by Chatwoot engineering).
+</p>
+
+<p align="center">
+  Compatible with any MCP client — Claude Code, Continue.dev, Cursor, custom AI agents, and more.
+</p>
 
 ---
 
+## Table of Contents
+
+- [Features](#features)
+- [Requirements](#requirements)
+- [Quick Start](#quick-start)
+- [Configuration](#configuration)
+- [Tools Reference](#tools-reference)
+  - [Profile](#profile)
+  - [Conversations](#conversations)
+  - [Messages](#messages)
+  - [Contacts](#contacts)
+  - [Inboxes & Agents & Teams](#inboxes--agents--teams)
+- [Usage Examples](#usage-examples)
+- [Architecture](#architecture)
+- [Testing](#testing)
+- [Project Structure](#project-structure)
+- [License](#license)
+
+---
+
+## Features
+
+- **15 MCP tools** covering the most common Chatwoot API operations
+- **Stdio transport** — zero HTTP overhead, native MCP protocol
+- **Official SDK** — no raw API calls, no manual JSON parsing, no reinvention
+- **Clean error handling** — every tool returns structured errors when the API fails
+- **Zero dependencies beyond** `chatwoot-sdk`, `mcp`, `httpx`, and `pydantic`
+
 ## Requirements
 
-- Python >= 3.11
-- A running Chatwoot instance (self-hosted or cloud)
-- [Chatwoot API Access Token](https://www.chatwoot.com/hc/user-guide/articles/1677238266-lesson-4-complete-your-customer-engagement-suite)
+- Python ≥ 3.11
+- A running [Chatwoot](https://www.chatwoot.com/) instance (self-hosted or Chatwoot Cloud)
+- [Chatwoot API Access Token](https://www.chatwoot.com/hc/user-guide/articles/1677238266-lesson-4-complete-your-customer-engagement-suite) — Profile → Access Token
 
 ## Quick Start
 
 ```bash
-git clone <your-repo-url> chatwoot-mcp
-cd chatwoot-mcp
+git clone https://github.com/erniomaldo/chatwoot-api-mcp.git
+cd chatwoot-api-mcp
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
+
+# Set your Chatwoot credentials
+export CHATWOOT_BASE_URL="https://chatwoot.tudominio.com"
+export CHATWOOT_USER_TOKEN="tX7k9mP2..."
+export CHATWOOT_DEFAULT_ACCOUNT_ID="2"
+
+# Start the MCP server
+python run_server.py
 ```
 
-## Environment Variables
+The server reads JSON-RPC requests from **stdin** and writes responses to **stdout** — the standard MCP stdio pattern.
+
+## Configuration
+
+### Environment Variables
 
 | Variable | Required | Description | Example |
 |----------|----------|-------------|---------|
 | `CHATWOOT_BASE_URL` | ✅ | Your Chatwoot instance URL | `https://chatwoot.tudominio.com` |
-| `CHATWOOT_USER_TOKEN` | ✅ | API token from Profile → Access Token | `tX7k9mP2...` |
-| `CHATWOOT_DEFAULT_ACCOUNT_ID` | ✅ | Numeric account ID from URL | `2` |
+| `CHATWOOT_USER_TOKEN` | ✅ | API access token from Profile → Access Token | `tX7k9mP2...` |
+| `CHATWOOT_DEFAULT_ACCOUNT_ID` | ✅ | Numeric account ID (from browser URL) | `2` |
 
-Get your token at: Chatwoot UI → click avatar → **Profile Settings** → **Access Token**.
+Get your token at: **Chatwoot UI → avatar → Profile Settings → Access Token**.
 
-## Run
+### With Any MCP Client
 
-### Direct (stdio)
+Add this server to your MCP client configuration. For example, with a generic `claude_desktop_config.json` or equivalent:
 
-```bash
-python run_server.py
+```json
+{
+  "mcpServers": {
+    "chatwoot": {
+      "command": "/path/to/chatwoot-api-mcp/.venv/bin/python",
+      "args": ["/path/to/chatwoot-api-mcp/run_server.py"],
+      "env": {
+        "CHATWOOT_BASE_URL": "https://chatwoot.tudominio.com",
+        "CHATWOOT_USER_TOKEN": "tu-token-aqui",
+        "CHATWOOT_DEFAULT_ACCOUNT_ID": "2"
+      }
+    }
+  }
+}
 ```
 
-The server starts in stdio mode — it reads JSON-RPC messages on stdin and writes responses on stdout. Use it with any MCP client.
+---
 
-### With Hermes Agent
-
-Add to `~/.hermes/config.yaml`:
-
-```yaml
-mcp_servers:
-  chatwoot:
-    command: "/home/ernesto-personal/chatwoot-mcp/.venv/bin/python"
-    args: ["/home/ernesto-personal/chatwoot-mcp/run_server.py"]
-    env:
-      CHATWOOT_BASE_URL: "https://chatwoot.tudominio.com"
-      CHATWOOT_USER_TOKEN: "tu-token-aqui"
-      CHATWOOT_DEFAULT_ACCOUNT_ID: "2"
-```
-
-Restart Hermes Agent. Tools appear as `mcp_chatwoot_*`.
-
-## Tools
+## Tools Reference
 
 ### Profile
 
 | Tool | Description |
 |------|-------------|
-| `chatwoot_get_profile` | Get authenticated user's profile |
+| `chatwoot_get_profile` | Get the authenticated user's profile |
 
 ### Conversations
 
 | Tool | Description |
 |------|-------------|
-| `chatwoot_list_conversations` | List conversations with filters (status, inbox, team, labels, search query `q`) |
-| `chatwoot_get_conversation` | Get a single conversation's full details |
-| `chatwoot_update_conversation` | Update status, assignee, or team |
-| `chatwoot_get_conversation_counts` | Get conversation counts by status |
+| `chatwoot_list_conversations` | List open conversations (filters: assignee, inbox, team, labels, search query) |
+| `chatwoot_get_conversation` | Get full details of a single conversation |
+| `chatwoot_update_conversation` | Update status, assignee, or team on a conversation |
+| `chatwoot_get_conversation_counts` | Count conversations by status (open, resolved, pending, snoozed) |
 
 ### Messages
 
 | Tool | Description |
 |------|-------------|
 | `chatwoot_get_conversation_messages` | List all messages in a conversation |
-| `chatwoot_send_message` | Send a message (outgoing, incoming, or private note) |
+| `chatwoot_send_message` | Send a message (outgoing, incoming, or private internal note) |
 
 ### Contacts
 
 | Tool | Description |
 |------|-------------|
-| `chatwoot_list_contacts` | List all contacts |
+| `chatwoot_list_contacts` | List all contacts (paginated) |
 | `chatwoot_get_contact` | Get a single contact's details |
 | `chatwoot_search_contacts` | Search contacts by name, email, or phone |
-| `chatwoot_get_contact_conversations` | List all conversations for a contact |
+| `chatwoot_get_contact_conversations` | List all conversations for a specific contact |
 
-### Inboxes
+### Inboxes, Agents & Teams
 
 | Tool | Description |
 |------|-------------|
 | `chatwoot_list_inboxes` | List all inboxes (WhatsApp, email, web widget, API, etc.) |
 | `chatwoot_get_inbox` | Get a single inbox's details |
-
-### Agents & Teams
-
-| Tool | Description |
-|------|-------------|
 | `chatwoot_list_agents` | List all agents in the account |
 | `chatwoot_list_teams` | List all teams |
 
-## Examples
+---
+
+## Usage Examples
 
 **"List my open WhatsApp conversations"**
-→ tool: `chatwoot_list_conversations` with `status=open`, `inbox_id=<tu-inbox-id>`
+→ `chatwoot_list_conversations` with `inbox_id=<your-whatsapp-inbox-id>`
 
 **"Read all messages from conversation 42"**
-→ tool: `chatwoot_get_conversation_messages` with `conversation_id=42`
+→ `chatwoot_get_conversation_messages` with `conversation_id=42`
 
 **"Find Juan's contact and his conversations"**
-→ tool: `chatwoot_search_contacts` with `q=Juan`
-→ then: `chatwoot_get_contact_conversations` with `contact_id=<id>`
+→ `chatwoot_search_contacts` with `q=Juan`
+→ then `chatwoot_get_contact_conversations` with `contact_id=<result-id>`
 
 **"Close conversation 42"**
-→ tool: `chatwoot_update_conversation` with `conversation_id=42`, `status=resolved`
+→ `chatwoot_update_conversation` with `conversation_id=42`, `status=resolved`
+
+**"Send a private note to conversation 7"**
+→ `chatwoot_send_message` with `conversation_id=7`, `content="Revisando...", `private=true`
+
+---
 
 ## Architecture
 
 ```
-WhatsApp → Evolution API → Chatwoot → PostgreSQL
-                                        ↓
-                                 chatwoot-sdk (API)
-                                        ↓
-                              chatwoot-mcp-server (stdio)
-                                        ↓
-                                 Hermes Agent (MCP client)
+WhatsApp / Telegram / Email → Evolution API → Chatwoot → PostgreSQL
+                                                        ↓
+                                                 chatwoot-sdk (Python)
+                                                        ↓
+                                              chatwoot-api-mcp (stdio)
+                                                        ↓
+                                                 MCP Client (Claude, etc.)
 ```
 
-The MCP server uses **chatwoot-sdk** (official Python SDK, MIT) to talk to the Chatwoot REST API. All 20+ tools are thin wrappers over the SDK's typed methods — no raw HTTP calls, no manual JSON parsing.
+The server sits as a lightweight translation layer: **Chatwoot REST API → typed Python SDK → MCP tools**. Every tool is a thin wrapper over the official `chatwoot-sdk` methods — no raw HTTP, no manual serialization.
+
+---
 
 ## Testing
 
@@ -142,27 +199,36 @@ source .venv/bin/activate
 python -m pytest tests/ -v
 ```
 
-Tests use mocked HTTP via `unittest.mock.patch` — no real Chatwoot instance needed.
+Tests use mocked HTTP via `unittest.mock.patch` — no live Chatwoot instance required.
+
+---
 
 ## Project Structure
 
 ```
-chatwoot-mcp/
-├── run_server.py        # Entry point (stdio transport)
+chatwoot-api-mcp/
+├── run_server.py          # MCP server entry point (stdio transport)
 ├── src/
-│   └── server.py        # Core module: 20+ MCP tools
+│   └── server.py          # Core module: 15 MCP tools
 ├── tests/
-│   ├── conftest.py      # Path setup
-│   └── test_server.py   # 14 mocked tests
+│   ├── conftest.py        # Test path setup
+│   └── test_server.py     # 14 mocked tests covering all tools and error cases
+├── docs/                  # Additional documentation (if any)
 ├── requirements.txt
 ├── .gitignore
 └── README.md
 ```
 
+---
+
 ## License
 
-MIT — Built on [chatwoot-sdk](https://pypi.org/project/chatwoot-sdk/) (MIT, by Chatwoot Inc.)
+**MIT License** — built on top of the official [chatwoot-sdk](https://pypi.org/project/chatwoot-sdk/) (MIT, by Chatwoot Inc.).
+
+This project is **not affiliated with, funded by, or endorsed by** Chatwoot Inc. It uses the publicly available Chatwoot Application API and the open-source `chatwoot-sdk`.
 
 ---
 
-*Powered by [FastMCP](https://github.com/jlowin/fastmcp) · chatwoot-sdk v0.2.0*
+<p align="center">
+  <a href="https://www.chatwoot.com/"><img src="https://img.shields.io/badge/Built%20for-Chatwoot-FF6C37?logo=chatwoot" alt="Built for Chatwoot"></a>
+</p>
