@@ -1,10 +1,3 @@
-<p align="center">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/chatwoot/chatwoot/main/public/brand-assets/logo.svg">
-    <img alt="Chatwoot" src="https://raw.githubusercontent.com/chatwoot/chatwoot/main/public/brand-assets/logo.svg" width="320">
-  </picture>
-</p>
-
 <h1 align="center">Chatwoot API MCP Server</h1>
 
 <p align="center">
